@@ -1,0 +1,19 @@
+Pillow # 圖片處理
+numpy  # 數值運算
+opencv-python # 圖片處理 (用於繪製邊界框等)
+tensorflow # 或 pytorch，根據你選擇的深度學習框架
+fastapi # 建立 Web API
+uvicorn # ASGI 伺服器，用於運行 FastAPI
+python-multipart # FastAPI 處理檔案上傳所需
+pydantic # FastAPI 資料驗證與序列化
+python-dotenv # 讀取 .env 環境變數檔案
+
+# 額外模型依賴 (根據你實際使用的模型模組)
+pytesseract # 圖片文字識別 (OCR) 的 Python 介面
+# 如果使用 pytesseract，你還需要額外安裝 Tesseract OCR 引擎本身 (非 Python 函式庫)
+# Windows: 下載安裝程式從 https://github.com/UB-Mannheim/tesseract/wiki
+# Ubuntu/Debian: sudo apt-get install tesseract-ocr
+# macOS (Homebrew): brew install tesseract
+
+transformers # 圖像描述模型 (如果使用 Hugging Face 模型)
+ultralytics # 物件偵測模型 (如果使用 YOLOv8)
