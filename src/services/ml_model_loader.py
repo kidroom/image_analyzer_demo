@@ -9,10 +9,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 class MLModelLoader:
+    
     """
     所有機器學習模型的集中載入器。
     """
-
     @classmethod
     def load_all_models(cls):
         """

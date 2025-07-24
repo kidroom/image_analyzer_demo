@@ -1,17 +1,11 @@
-# src/services/image_analysis_service.py
-
 from PIL import Image
-import numpy as np
 import os
 from datetime import datetime
-import json
 import logging
-
 from src.utils.image_processing import resize_image, convert_to_rgb, normalize_image, pil_to_numpy, draw_bounding_boxes
 from src.utils.file_handler import save_image, save_json
-from src.services.ml_model_loader import MLModelLoader # 引入統一載入器
 from src.models_services.classifier import ImageClassifier
-from src.models_services.detector import ObjectDetector
+from src.models_services.detector import YOLODetector
 from src.models_services.ocr import OCR
 from src.models_services.caption import ImageCaptioner
 from src.config import app_config
@@ -93,7 +87,7 @@ class ImageAnalysisService:
         # 2. 物件偵測
         try:
             # 物件偵測器通常可以直接接受 PIL Image 或需要不同於分類模型的預處理
-            object_detection_result = ObjectDetector.predict(pil_image_rgb.copy()) 
+            object_detection_result = YOLODetector.predict(pil_image_rgb.copy()) 
             analysis_results["object_detection"] = object_detection_result
             logger.info(f"物件偵測找到 {len(object_detection_result['detected_objects'])} 個物件。")
             
@@ -133,10 +127,23 @@ class ImageAnalysisService:
 
         # 4. 圖像描述
         try:
-            caption_result = ImageCaptioner.generate_caption(pil_image_rgb)
-            analysis_results["image_captioning"] = caption_result
-            if caption_result.get('caption'):
-                logger.info(f"圖片描述：{caption_result['caption']}")
+            # 將 PIL Image 保存到臨時文件
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as temp_file:
+                temp_path = temp_file.name
+                pil_image_rgb.save(temp_path, format='JPEG')
+            
+            try:
+                caption_result = ImageCaptioner.generate_caption(temp_path)
+                analysis_results["image_captioning"] = caption_result
+                if caption_result.get('caption'):
+                    logger.info(f"圖片描述：{caption_result['caption']}")
+            finally:
+                # 清理臨時文件
+                try:
+                    os.unlink(temp_path)
+                except Exception as e:
+                    logger.warning(f"刪除臨時文件 {temp_path} 失敗：{e}")
         except Exception as e:
             logger.warning(f"圖像描述失敗：{original_filename}: {e}")
             analysis_results["image_captioning"]["error"] = str(e)

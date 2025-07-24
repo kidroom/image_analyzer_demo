@@ -10,7 +10,6 @@ ENVIRONMENT = os.getenv('APP_ENV', 'development').lower()
 env_files = [
     '.env',
     f'.env.{ENVIRONMENT}',
-    '.env.local'
 ]
 
 for env_file in env_files:
@@ -19,6 +18,9 @@ for env_file in env_files:
         print(f"Loaded environment variables from {env_file}")
 
 class Config:
+    # 環境設定
+    ENVIRONMENT = os.getenv('APP_ENV', 'development').lower()
+
     # 專案根目錄 (假設 config.py 位於 src/ 下)
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -59,4 +61,4 @@ os.makedirs(app_config.PROCESSED_DATA_DIR, exist_ok=True)
 os.makedirs(app_config.OUTPUTS_DIR, exist_ok=True)
 os.makedirs(app_config.MODELS_STORAGE_DIR, exist_ok=True)
 
-print(f"Running in {ENVIRONMENT} environment. Models storage: {app_config.MODELS_STORAGE_DIR}")
+print(f"Running in {app_config.ENVIRONMENT} environment. Models storage: {app_config.MODELS_STORAGE_DIR}")

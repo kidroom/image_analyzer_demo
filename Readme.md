@@ -3,8 +3,7 @@ image_analysis_project/
 │   ├── raw/                  　　　　# 原始圖片資料
 │   ├── processed/            　　　　# 處理後的圖片資料 (例如：預處理、特徵提取後的資料)
 │   └── outputs/              　　　　# 分析結果，例如：標註圖片、報告、CSV
-├── models_storage/                  # 儲存訓練好的模型 (例如：.h5, .pth, .pkl)
-├── notebooks/                　　　　# Jupyter Notebooks，用於探索性資料分析、模型原型設計
+│   └──models_storage/               # 儲存訓練好的模型 (例如：.h5, .pth, .pkl)
 ├── src/
 │   ├── __init__.py           　　　　# Python 包初始化
 │   ├── main.py               　　　　# 專案主入口點 (例如：啟動 API 服務、執行批次分析)
@@ -24,9 +23,9 @@ image_analysis_project/
 │   │   ├── image_analysis_service.py # 圖片分析主邏輯
 │   │   └── ml_model_loader.py        # 模型載入與預測介面
 │   ├── api/                          # (如果需要 Web API)
-│   │   ├── __init__.py
-│   │   └── routes.py                 # API 端點定義 (例如：Flask/FastAPI)
-│   │   └── schemas.py                # 資料驗證模型 (例如：Pydantic)
+│   │   └── controllers/              # API 控制器
+│   │       ├── __init__.py
+│   │       └── training_controller.py # API 控制器
 │   └── tests/                        # 測試文件
 │       ├── __init__.py
 │       └── test_image_analysis.py

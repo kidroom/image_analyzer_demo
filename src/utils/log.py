@@ -1,6 +1,6 @@
 import logging
 import os
-from lib.config import config
+from src.config import app_config
 from logging.handlers import TimedRotatingFileHandler
 
 
@@ -10,7 +10,7 @@ class Logger:
         """初始化"""
 
         self.logger = logging.getLogger(log_name)
-        self.logger.setLevel(config("LOG_LEVEL", cast=int))
+        self.logger.setLevel(app_config.LOG_LEVEL)
         # 避免重复添加 handler
         if not self.logger.hasHandlers():
             # log格式
@@ -28,12 +28,12 @@ class Logger:
                 log_path, when="D", interval=1, backupCount=30, encoding="utf-8"
             )
             file_handler.setFormatter(log_format)
-            file_handler.setLevel(config("FILE_LOG_LEVEL", cast=int))
+            file_handler.setLevel(app_config.LOG_LEVEL)
 
             # **控制台log**
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(log_format)
-            console_handler.setLevel(config("TERMINAL_LOG_LEVEL", cast=int))
+            console_handler.setLevel(app_config.LOG_LEVEL)
 
             # 添加 Handler
             self.logger.addHandler(file_handler)
