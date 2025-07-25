@@ -9,3 +9,5 @@ src/__pycache__
 *.webP
 *.jfif
 *.png
+data
+models_storage

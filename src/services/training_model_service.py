@@ -5,6 +5,7 @@ import random
 import datetime
 import torch
 from src.models_services.classifier import ImageClassifier
+from src.utils.log import logger
 
 def load_dataset(dataset_path, split_ratio=0.8):
     """
@@ -34,7 +35,7 @@ def load_dataset(dataset_path, split_ratio=0.8):
         class_path = dataset_path / class_name
         image_paths = [p for p in class_path.glob('*') if p.suffix.lower() in ['.jpg', '.jpeg', '.png']]
         if not image_paths:
-            print(f"警告: 在 {class_path.absolute()} 中找不到任何圖片文件")
+            logger.warning(f"警告: 在 {class_path.absolute()} 中找不到任何圖片文件")
         data.extend([(str(p.absolute()), class_name) for p in image_paths])
     
     if not data:
@@ -48,8 +49,10 @@ def load_dataset(dataset_path, split_ratio=0.8):
     train_data = data[:split_idx] if split_idx > 0 else []
     val_data = data[split_idx:] if split_idx < len(data) else []
     
-    print(f"成功加載 {len(classes)} 個類別，共 {len(data)} 張圖片")
-    print(f"訓練集: {len(train_data)} 張, 驗證集: {len(val_data)} 張")
+    logger.debug(
+        f"成功加載 {len(classes)} 個類別，共 {len(data)} 張圖片\n"
+        f"訓練集: {len(train_data)} 張, 驗證集: {len(val_data)} 張"
+    )
     
     return train_data, val_data, classes
 
@@ -72,7 +75,7 @@ def classifier_train():
         os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
         
         # 加載數據
-        print(f"正在從 {os.path.abspath(dataset_path)} 加載數據集...")
+        logger.debug(f"正在從 {os.path.abspath(dataset_path)} 加載數據集...")
         train_data, val_data, classes = load_dataset(dataset_path)
         
         if not train_data:
@@ -80,8 +83,10 @@ def classifier_train():
             
         # 初始化分類器
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print(f"使用設備: {device}")
-        print(f"初始化分類器，類別: {', '.join(classes)}")
+        logger.debug(
+            f"使用設備: {device}\n"
+            f"初始化分類器，類別: {', '.join(classes)}"
+        )
         
         classifier = ImageClassifier(
             class_names=classes,
@@ -90,7 +95,7 @@ def classifier_train():
         )
         
         # 訓練模型
-        print("開始訓練模型...")
+        logger.debug("開始訓練模型...")
         history = classifier.train(
             train_data=train_data,
             val_data=val_data,
@@ -100,7 +105,7 @@ def classifier_train():
             model_save_path=model_save_path
         )
         
-        print(f"模型訓練完成，已保存至 {model_save_path}")
+        logger.debug(f"模型訓練完成，已保存至 {model_save_path}")
         return {
             'status': 'success',
             'model_path': model_save_path,
@@ -111,7 +116,7 @@ def classifier_train():
         
     except Exception as e:
         error_msg = f"訓練過程中發生錯誤: {str(e)}"
-        print(error_msg)
+        logger.error(error_msg)
         raise ValueError(error_msg) from e
 
 
@@ -142,20 +147,21 @@ def classifier_predict(image_path: str, model_path: str = None) -> dict:
         # 檢查模型文件是否存在
         if not os.path.isfile(model_path):
             raise FileNotFoundError(
-                f"模型文件不存在: {model_path}"
+                f"模型文件不存在: {model_path}\n"
                 "請先訓練模型或提供有效的模型文件路徑"
             )
             
         # 加載模型
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print(f"使用設備: {device}")
-        print(f"加載模型: {model_path}")
+        logger.debug(
+            f"使用設備: {device}\n"
+            f"加載模型: {model_path}")
         
         # 加載模型（不需要指定類別，因為模型文件中已保存）
         classifier = ImageClassifier.load_model(model_path, device=device)
         
         # 進行預測
-        print(f"正在預測圖片: {image_path}")
+        logger.debug(f"正在預測圖片: {image_path}")
         result = classifier.predict(image_path)
         
         # 添加額外信息
@@ -169,5 +175,5 @@ def classifier_predict(image_path: str, model_path: str = None) -> dict:
         
     except Exception as e:
         error_msg = f"預測過程中發生錯誤: {str(e)}"
-        print(error_msg)
+        logger.error(error_msg)
         raise RuntimeError(error_msg) from e

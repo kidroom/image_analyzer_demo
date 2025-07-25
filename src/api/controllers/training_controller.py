@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 import os
-import logging
 from src.utils.log import Logger
 
 # 導入服務層
@@ -12,9 +11,6 @@ training_controller = Blueprint('training', __name__)
 
 # 配置日誌
 logger = Logger(__name__).logger
-
-# 創建藍圖
-training_controller = Blueprint('training', __name__)
 
 @training_controller.route("/health", methods=["GET"])
 def health_check():

@@ -50,7 +50,7 @@ class Config:
     TESSERACT_CMD = os.getenv('TESSERACT_CMD', '/usr/bin/tesseract') # Tesseract 執行檔的路徑
 
     # 日誌等級
-    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG').upper()
 
 # 實例化配置
 app_config = Config()
