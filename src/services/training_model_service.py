@@ -68,7 +68,7 @@ def classifier_train():
     """
     try:
         # 設置參數
-        dataset_path = os.path.join("data", "raw")  # 使用 os.path.join 確保跨平台兼容性
+        dataset_path = os.path.join("data", "raw", "classifier")  # 使用 os.path.join 確保跨平台兼容性
         model_save_path = os.path.join("models_storage", "classifier.pth")
         
         # 創建必要的目錄
