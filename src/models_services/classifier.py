@@ -12,7 +12,7 @@ from tqdm import tqdm
 from src.utils.log import logger
 
 class CustomImageClassifier(nn.Module):
-    def __init__(self, num_classes: int, model_name: str = 'resnet18', pretrained: bool = True):
+    def __init__(self, num_classes: int, model_name: str = 'resnet18', weights: bool = True):
         """
         初始化自定義圖像分類器
         
@@ -26,16 +26,16 @@ class CustomImageClassifier(nn.Module):
         
         # 加載預訓練模型
         if self.model_name == 'resnet18':
-            self.model = models.resnet18(pretrained=pretrained)
+            self.model = models.resnet18(weights=weights)
             # 替換最後一層以匹配類別數量
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, num_classes)
         elif self.model_name == 'resnet34':
-            self.model = models.resnet34(pretrained=pretrained)
+            self.model = models.resnet34(weights=weights)
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, num_classes)
         elif self.model_name == 'resnet50':
-            self.model = models.resnet50(pretrained=pretrained)
+            self.model = models.resnet50(weights=weights)
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, num_classes)
         else:
@@ -189,16 +189,17 @@ class ImageClassifier:
         
         # 定義損失函數（帶權重）和優化器
         criterion = nn.CrossEntropyLoss(weight=class_weights)
-        optimizer = optim.AdamW(self.model.parameters(), 
-                              lr=learning_rate, 
-                              weight_decay=weight_decay)
+        optimizer = optim.AdamW(
+            self.model.parameters(), 
+            lr=learning_rate, 
+            weight_decay=weight_decay)
         
         # 學習率調度器
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode='max', factor=0.5, patience=3)
         
         # 混合精度訓練
-        scaler = torch.cuda.amp.GradScaler(enabled=self.device != 'cpu')
+        scaler = torch.amp.GradScaler(self.device, enabled=self.device != 'cpu')
         
         # Early stopping
         best_val_acc = 0.0
@@ -218,7 +219,7 @@ class ImageClassifier:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 
                 # 混合精度訓練
-                with torch.cuda.amp.autocast(enabled=self.device != 'cpu'):
+                with torch.amp.autocast(self.device, enabled=self.device != 'cpu'):
                     outputs = self.model(inputs)
                     loss = criterion(outputs, labels)
                 

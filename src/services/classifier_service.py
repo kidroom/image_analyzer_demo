@@ -1,4 +1,3 @@
-# train_classifier.py
 import os
 from pathlib import Path
 import random

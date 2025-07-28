@@ -2,17 +2,15 @@ from flask import Blueprint, jsonify, request
 from datetime import datetime
 import os
 from src.utils.log import Logger
-
-# 導入服務層
-from src.services.training_model_service import classifier_train as train_model, classifier_predict as predict_model
+from src.services.classifier_service import classifier_train as train_model, classifier_predict as predict_model
 
 # 創建藍圖
-training_controller = Blueprint('training', __name__)
+classifier_blueprint = Blueprint('classifier', __name__)
 
 # 配置日誌
 logger = Logger(__name__).logger
 
-@training_controller.route("/health", methods=["GET"])
+@classifier_blueprint.route("/health", methods=["GET"])
 def health_check():
     """
     檢查服務是否正常運行。
@@ -32,7 +30,7 @@ def health_check():
         return jsonify({"error": "Internal Server Error"}), 500
 
 # 建立分類模型訓練
-@training_controller.route("/classifier_train", methods=["POST"])
+@classifier_blueprint.route("/classifier_train", methods=["POST"])
 def classifier_train():
     try:
         logger.info("開始建立分類模型訓練")
@@ -48,7 +46,7 @@ def classifier_train():
         logger.error(f"建立分類模型訓練失敗: {str(e)}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
-@training_controller.route("/classifier_predict", methods=["POST"])
+@classifier_blueprint.route("/classifier_predict", methods=["POST"])
 def classifier_predict():
     """
     使用訓練好的模型進行圖像分類預測
@@ -120,7 +118,7 @@ def classifier_predict():
         logger.error(f"處理請求時出錯: {str(e)}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
-@training_controller.route("/logtest", methods=["GET"])
+@classifier_blueprint.route("/logtest", methods=["GET"])
 def logtest():
     try:
         logger.debug("這是一條 DEBUG 日誌")

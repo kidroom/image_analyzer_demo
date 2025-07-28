@@ -7,7 +7,8 @@ from datetime import datetime
 import time
 
 # 導入藍圖
-from src.api.controllers.training_controller import training_controller
+from src.api.controllers.classifier_controller import classifier_blueprint
+from src.api.controllers.caption_controller import caption_blueprint
 from src.config import app_config
 
 class Router:
@@ -106,8 +107,9 @@ class Router:
     
     def _register_blueprints(self):
         """註冊所有藍圖"""
-        # 註冊訓練相關的藍圖
-        self.app.register_blueprint(training_controller, url_prefix='/api/v1/training')
+        # 註冊控制器藍圖
+        self.app.register_blueprint(caption_blueprint, url_prefix='/api/caption')
+        self.app.register_blueprint(classifier_blueprint, url_prefix='/api/classifier')
         
         # 註冊健康檢查端點
         @self.app.route('/health', methods=['GET'])
