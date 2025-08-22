@@ -1,7 +1,7 @@
 import os
 import json
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Union
 from PIL import Image
 import torch
 from src.models_services.caption import ImageCaptioner, ImageCaptioningDataset
@@ -26,28 +26,46 @@ class CaptionService:
         if self.model_path:
             os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
     
-    def load_model(self, model_path: str = None) -> None:
-        """加載圖像描述模型"""
+    def load_model(self, model_path: str = None) -> bool:
+        """
+        加載圖像描述模型
+        
+        Args:
+            model_path: 模型路徑，如果為None則加載默認模型
+            
+        Returns:
+            bool: 是否成功加載模型
+            
+        Raises:
+            RuntimeError: 加載模型失敗時拋出異常
+        """
         model_path = model_path or self.model_path
         try:
+            self.captioner = ImageCaptioner(device=self.device)
+            
             if model_path and os.path.exists(model_path):
                 logger.info(f"從 {model_path} 加載圖像描述模型...")
-                self.captioner = ImageCaptioner.load_model_from_file(model_path, self.device)
+                self.captioner.load_model(model_path)
             else:
                 logger.info("加載預設的圖像描述模型...")
-                self.captioner = ImageCaptioner(device=self.device)
                 self.captioner.load_model()
             
             logger.info(f"圖像描述模型已加載到 {self.device}")
             return True
+            
         except Exception as e:
-            logger.error(f"加載圖像描述模型失敗: {str(e)}")
-            raise
+            error_msg = f"加載圖像描述模型失敗: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise RuntimeError(error_msg) from e
     
     def train(
         self,
         train_data: List[Tuple[str, str]],
         val_data: List[Tuple[str, str]],
+        batch_size: int = 8,
+        num_epochs: int = 10,
+        learning_rate: float = 5e-5,
+        max_length: int = 128,
         model_save_path: str = None
     ) -> Dict:
         """
@@ -64,18 +82,18 @@ class CaptionService:
         try:
             logger.info("開始訓練圖像描述模型...")
             
-            # 初始化模型
-            self.captioner = ImageCaptioner(device=self.device)
-            self.captioner.load_model()
-            
+            # 確保模型已加載
+            if self.captioner is None:
+                self.load_model()
+                
             # 訓練模型
             history = self.captioner.train(
                 train_data=train_data,
                 val_data=val_data,
-                batch_size=8,
-                num_epochs=10,
-                learning_rate=5e-5,
-                max_length=128,
+                batch_size=batch_size,
+                num_epochs=num_epochs,
+                learning_rate=learning_rate,
+                max_length=max_length,
                 model_save_path=model_save_path or self.model_path
             )
             
@@ -95,6 +113,19 @@ class CaptionService:
     
     def generate_caption(self, image_path: str, max_length: int = 128) -> Dict:
         """
+        為單張圖像生成描述
+        
+        Args:
+            image_path: 圖像文件路徑
+            max_length: 生成描述的最大長度
+            
+        Returns:
+            dict: 包含生成結果的字典
+            
+        Raises:
+            ValueError: 當圖像路徑無效或處理失敗時拋出
+        """
+        """
         為圖像生成描述
         
         Args:
@@ -105,29 +136,36 @@ class CaptionService:
             dict: 包含生成描述的字典
         """
         try:
+            logger.info(f"正在為圖像生成描述: {image_path}")
+            
             # 確保模型已加載
             if self.captioner is None:
                 self.load_model()
-            
+                
             # 檢查圖像文件是否存在
-            if not os.path.isfile(image_path):
+            if not os.path.exists(image_path):
                 raise FileNotFoundError(f"圖像文件不存在: {image_path}")
-            
+                
+            # 驗證圖像文件
+            try:
+                with Image.open(image_path) as img:
+                    img.verify()
+            except Exception as e:
+                raise ValueError(f"無效的圖像文件: {str(e)}")
+                
             # 生成描述
-            result = self.captioner.generate_caption(
-                image_path=image_path,
-                max_length=max_length
-            )
+            caption = self.captioner.generate_caption(image_path, max_length)
             
+            logger.info(f"成功為 {os.path.basename(image_path)} 生成描述")
             return {
                 'status': 'success',
                 'image_path': image_path,
-                'caption': result['caption'],
-                'confidence': result.get('confidence', 1.0)
+                'caption': caption,
+                'max_length': max_length
             }
             
         except Exception as e:
-            error_msg = f"生成圖像描述時出錯: {str(e)}"
+            error_msg = f"生成描述失敗: {str(e)}"
             logger.error(error_msg, exc_info=True)
             raise ValueError(error_msg) from e
 
